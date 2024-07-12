@@ -43,7 +43,7 @@ section {
 
 .max-width {
     max-width: 1300px;
-    padding: 0 80px;
+    padding: 0 60px;
     margin: auto;
 }
 
@@ -255,7 +255,7 @@ section .title::after {
     width: calc(33% - 20px);
     text-align: center;
     border-radius: 10px;
-    padding: 50px 25px;
+    padding: 20px 25px;
     cursor: pointer;
     transition: all 0.3s ease;
     color: white;
@@ -278,10 +278,13 @@ section .title::after {
 }
 
 .services .serv-content .card .text {
-    font-size: 25px;
-    font-weight: 500;
-    /*background: #ecc3ec;*/
+    font-size: 22px;
+    font-weight: 400;
     margin: 10px 0 7px 0;
+}
+.services .serv-content .card p {
+    font-size: 12px;
+    font-weight: 400;
 }
 
 .skills .title::after {
