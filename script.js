@@ -75,7 +75,7 @@ document.getElementById('contact-form')
 
         btn.value = 'Sending...';
 
-        const serviceID = 'default_service';
+        const serviceID = 'service_t3z7jfc';
         const templateID = 'template_9rg5oxt';
 
         emailjs.sendForm(serviceID, templateID, this)
