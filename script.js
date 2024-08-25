@@ -49,23 +49,6 @@ $(document).ready(function () {
         loop: true
     });
 });
-// document.getElementById('contact-form').addEventListener('submit', function(event) {
-//     event.preventDefault();
-//
-//     // Collect form data
-//     var name = document.getElementById('name').value;
-//     var email = document.getElementById('email').value;
-//     var subject = document.getElementById('subject').value;
-//     var message = document.getElementById('message').value;
-//
-//     // Send email
-//     emailjs.send('service_t3z7jfc', '7h6AG0ZC6-PEIYcOp', {
-//         from_name: name,
-//         from_email: email,
-//         subject: subject,
-//         message: message
-//     })
-// });
 
 const btn = document.getElementById('button');
 
@@ -87,3 +70,4 @@ document.getElementById('contact-form')
                 alert(JSON.stringify(err));
             });
     });
+//

@@ -1,4 +1,3 @@
-/*@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;500;600;700;900&display=swap');*/
 @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
 * {
     margin: 0;
@@ -654,7 +653,7 @@ section .title::after {
 
 @media (max-width: 1199px) {
     .header {
-        background-color: var(--background-color);
+        background: #0F1624 ;
         border-right: 1px solid color-mix(in srgb, var(--default-color), transparent 90%);
         width: 100px;
         left: -100%;
@@ -765,3 +764,22 @@ section .title::after {
 .navmenu li:hover>a span {
     display: block;
 }
+@media (max-width: 768px) {
+    .column.right .row .col-lg-2 {
+        flex: 1 1 20%; /* Adjust the width of items */
+        max-width: 20%; /* Ensure items don't exceed this width */
+    }
+}
+
+@media (max-width: 500px) {
+    .column.right .row .col-lg-2 {
+        flex: 1 1 25%; /* Adjust the width for very small screens */
+        max-width: 25%;
+    }
+
+    .column.right .row .card img {
+        width: 48px; /* Adjust size of images for very small screens */
+        height: 48px;
+    }
+}
+/**/
