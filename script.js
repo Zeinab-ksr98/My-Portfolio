@@ -225,25 +225,156 @@ $(document).ready(function () {
     });
 });
 
-const btn = document.getElementById('button');
+//Contact form: validate the email, send via EmailJS, show a popup with the result
+(function () {
+    var form = document.getElementById('contact-form');
+    var btn = document.getElementById('button');
+    var emailInput = document.getElementById('email');
+    if (!form || !btn || !emailInput) return;
 
-document.getElementById('contact-form')
-    .addEventListener('submit', function(event) {
+    var BTN_LABEL = btn.textContent;
+    var EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
+    var COMMON_DOMAINS = ['gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com', 'icloud.com'];
+
+    var errorEl = document.createElement('div');
+    errorEl.className = 'field-error';
+    errorEl.setAttribute('role', 'alert');
+    emailInput.parentNode.appendChild(errorEl);
+
+    function distance(a, b) {
+        var prev = [], i, j;
+        for (j = 0; j <= b.length; j++) prev[j] = j;
+        for (i = 1; i <= a.length; i++) {
+            var cur = [i];
+            for (j = 1; j <= b.length; j++) {
+                cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+            }
+            prev = cur;
+        }
+        return prev[b.length];
+    }
+
+    // Returns an error message, or '' when the address looks right.
+    function checkEmail(value) {
+        value = value.trim();
+        if (!value) return 'Please enter your email address.';
+        if (!EMAIL_RE.test(value) || value.indexOf('..') !== -1) {
+            return 'That email doesn’t look right. It should look like name@example.com.';
+        }
+        var domain = value.split('@')[1].toLowerCase();
+        if (COMMON_DOMAINS.indexOf(domain) === -1) {
+            for (var i = 0; i < COMMON_DOMAINS.length; i++) {
+                if (distance(domain, COMMON_DOMAINS[i]) <= 2) {
+                    return 'Did you mean ' + value.split('@')[0] + '@' + COMMON_DOMAINS[i] + '?';
+                }
+            }
+        }
+        return '';
+    }
+
+    // Resolves false only when DNS says the domain can't receive mail; any
+    // lookup failure (offline, blocked, timeout) resolves true so real visitors
+    // are never blocked by a flaky check.
+    function dnsAnswers(domain, type) {
+        var ctrl = 'AbortController' in window ? new AbortController() : null;
+        var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 4000);
+        return fetch('https://dns.google/resolve?name=' + encodeURIComponent(domain) + '&type=' + type,
+                     ctrl ? { signal: ctrl.signal } : undefined)
+            .then(function (r) { return r.json(); })
+            .then(function (d) { clearTimeout(timer); return d; });
+    }
+
+    function domainCanReceiveMail(domain) {
+        return dnsAnswers(domain, 'MX').then(function (d) {
+            var mx = (d.Answer || []).filter(function (a) { return a.type === 15; });
+            if (mx.length) {
+                // A single "0 ." record is the standard way to say "this domain accepts no mail".
+                var nullMx = mx.length === 1 && /^0\s+\.?$/.test(mx[0].data.trim());
+                return !nullMx;
+            }
+            if (d.Status === 3) return false; // NXDOMAIN: domain doesn't exist
+            // No MX: mail can still be delivered to the domain's A record.
+            return dnsAnswers(domain, 'A').then(function (a) {
+                return a.Status !== 3 && !!(a.Answer && a.Answer.length);
+            });
+        }).catch(function () { return true; });
+    }
+
+    function showError(msg) {
+        errorEl.textContent = msg;
+        var field = emailInput.parentNode;
+        field.style.marginBottom = msg ? (errorEl.offsetHeight + 4 + 15) + 'px' : '';
+        emailInput.classList.toggle('invalid', !!msg);
+        emailInput.setAttribute('aria-invalid', msg ? 'true' : 'false');
+    }
+
+    emailInput.addEventListener('input', function () {
+        if (errorEl.textContent) showError('');
+    });
+
+    function popup(type, title, text) {
+        var overlay = document.createElement('div');
+        overlay.className = 'popup-overlay';
+        overlay.innerHTML =
+            '<div class="popup popup--' + type + '" role="dialog" aria-modal="true" aria-labelledby="popupTitle">' +
+            '<div class="popup-icon"><i class="bi ' + (type === 'success' ? 'bi-check-lg' : 'bi-x-lg') + '"></i></div>' +
+            '<h3 id="popupTitle"></h3><p></p>' +
+            '<button type="button" class="popup-close">OK</button></div>';
+        overlay.querySelector('h3').textContent = title;
+        overlay.querySelector('p').textContent = text;
+
+        function close() {
+            document.removeEventListener('keydown', onKey);
+            overlay.remove();
+        }
+        function onKey(e) { if (e.key === 'Escape') close(); }
+
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+        overlay.querySelector('.popup-close').addEventListener('click', close);
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(overlay);
+        overlay.querySelector('.popup-close').focus();
+    }
+
+    form.setAttribute('novalidate', '');
+    form.addEventListener('submit', function (event) {
         event.preventDefault();
 
-        btn.value = 'Sending...';
+        var problem = checkEmail(emailInput.value);
+        if (problem) {
+            showError(problem);
+            emailInput.focus();
+            return;
+        }
+        showError('');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
 
-        const serviceID = 'service_1btmddm';
-        const templateID = 'template_gxtvdfr';
+        btn.disabled = true;
+        btn.textContent = 'Checking email...';
 
-
-        emailjs.sendForm(serviceID, templateID, this)
-            .then(() => {
-                btn.value = 'Send Email';
-                alert('Sent!');
-            }, (err) => {
-                btn.value = 'Send Email';
-                alert(JSON.stringify(err));
+        domainCanReceiveMail(emailInput.value.trim().split('@')[1])
+            .then(function (ok) {
+                if (!ok) {
+                    showError('We couldn’t find a mail server for that address. Please check the spelling after the @.');
+                    emailInput.focus();
+                    return null;
+                }
+                btn.textContent = 'Sending...';
+                return emailjs.sendForm('service_1btmddm', 'template_gxtvdfr', form);
+            })
+            .then(function (result) {
+                if (result === null) return;
+                form.reset();
+                popup('success', 'Message sent!', 'Thank you for reaching out. I’ll get back to you soon.');
+            }, function () {
+                popup('error', 'Couldn’t send your message', 'Something went wrong on our end. Please try again in a moment, or reach me on LinkedIn.');
+            })
+            .then(function () {
+                btn.disabled = false;
+                btn.textContent = BTN_LABEL;
             });
     });
-//
+})();
