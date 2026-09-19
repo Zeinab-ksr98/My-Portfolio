@@ -7,6 +7,7 @@
   --eggplant:  #420442;
   --muted: #8A93A6;
   --font-display: "Ubuntu", sans-serif;
+  --nav-font: "Kalam", cursive;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --pad: 24px;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
@@ -266,7 +267,6 @@ svg {
 
 
 
-@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
 * {
     margin: 0;
     padding: 0;
@@ -282,6 +282,7 @@ html {
 
 body {
     background: var(--bg);
+    font-family: var(--font-display);
     transition: background-color .3s var(--ease);
 }
 
